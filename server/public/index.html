@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Capsule — AI-гардероб и стилист</title>
+  <meta name="description" content="Capsule каталогизирует вашу одежду по фото и подбирает идеальные образы с учётом погоды, событий и того, что вы уже носили." />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --surface: #fdf8f8;
+      --surface-low: #f7f3f2;
+      --surface-container: #f1edec;
+      --surface-high: #ebe7e6;
+      --white: #ffffff;
+      --onyx: #1c1b1b;
+      --variant: #444748;
+      --outline: #747878;
+      --outline-variant: #c4c7c7;
+      --accent: #a77b4e;
+      --accent-soft: #f0bd8b;
+      --radius: 28px;
+      --radius-sm: 16px;
+      --shadow: 0 18px 50px rgba(28, 27, 27, 0.12);
+      --shadow-soft: 0 10px 30px rgba(28, 27, 27, 0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--surface);
+      color: var(--onyx);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; letter-spacing: -0.02em; line-height: 1.05; }
+    a { text-decoration: none; color: inherit; }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+    svg { display: block; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(253, 248, 248, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(196, 199, 199, 0.4);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-family: 'Playfair Display', serif; font-weight: 800; font-size: 22px; }
+    .logo img { width: 34px; height: 34px; border-radius: 9px; object-fit: cover; }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a.link { font-size: 14px; color: var(--variant); font-weight: 500; transition: color .15s; }
+    .nav-links a.link:hover { color: var(--onyx); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 9px; justify-content: center;
+      font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; border: none;
+      padding: 12px 22px; border-radius: 999px; transition: transform .15s, opacity .15s, background .15s;
+      line-height: 1; white-space: nowrap;
+    }
+    .btn svg { width: 18px; height: 18px; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--onyx); color: #ffffff; }
+    .btn-primary:hover { background: #000; }
+    .btn-ghost { background: transparent; color: var(--onyx); border: 1px solid var(--outline-variant); }
+    .btn-ghost:hover { background: var(--surface-high); }
+    .btn-lg { padding: 16px 30px; font-size: 15px; }
+    .btn-lg svg { width: 20px; height: 20px; }
+
+    /* HERO */
+    header.hero { padding: 80px 0 40px; position: relative; }
+    .hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface-high); color: var(--variant);
+      padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 24px;
+    }
+    .eyebrow svg { width: 14px; height: 14px; color: var(--accent); }
+    .hero h1 { font-size: clamp(44px, 6vw, 76px); font-weight: 800; }
+    .hero h1 em { font-style: italic; color: var(--accent); }
+    .hero p.lead { font-size: 19px; line-height: 1.6; color: var(--variant); margin: 24px 0 36px; max-width: 520px; }
+    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+    .store-note { font-size: 13px; color: var(--outline); margin-top: 18px; }
+
+    /* PHONE */
+    .phones { position: relative; height: 560px; display: flex; align-items: center; justify-content: center; }
+    .phone {
+      position: absolute; width: 240px; border-radius: 42px; overflow: hidden;
+      background: #000; padding: 8px; box-shadow: var(--shadow);
+      transition: transform .4s ease;
+    }
+    .phone img { width: 100%; display: block; border-radius: 34px; }
+    .phone.back-left { transform: translateX(-130px) rotate(-8deg) scale(0.88); z-index: 1; }
+    .phone.back-right { transform: translateX(130px) rotate(8deg) scale(0.88); z-index: 1; }
+    .phone.front { z-index: 3; }
+    .phones:hover .phone.back-left { transform: translateX(-150px) rotate(-10deg) scale(0.9); }
+    .phones:hover .phone.back-right { transform: translateX(150px) rotate(10deg) scale(0.9); }
+
+    .tags { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 40px; }
+    .tag { background: var(--surface-high); color: var(--variant); padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; }
+
+    /* SECTION */
+    section { padding: 90px 0; }
+    .section-head { max-width: 640px; margin-bottom: 56px; }
+    .section-head .eyebrow { margin-bottom: 18px; }
+    .section-head h2 { font-size: clamp(32px, 4vw, 48px); font-weight: 700; }
+    .section-head p { font-size: 17px; color: var(--variant); margin-top: 16px; line-height: 1.6; }
+
+    /* FEATURES */
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .feature {
+      background: var(--white); border-radius: var(--radius); padding: 32px;
+      box-shadow: var(--shadow-soft); transition: transform .2s, box-shadow .2s;
+    }
+    .feature:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+    .feature .ico {
+      width: 54px; height: 54px; border-radius: 16px; background: var(--surface-container);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 20px; color: var(--onyx);
+    }
+    .feature .ico svg { width: 26px; height: 26px; }
+    .feature h3 { font-size: 21px; margin-bottom: 10px; }
+    .feature p { font-size: 15px; color: var(--variant); line-height: 1.6; }
+
+    /* SHOWCASE STRIP */
+    .strip { background: var(--onyx); color: var(--white); border-radius: 40px; padding: 64px 48px; }
+    .strip .section-head h2 { color: var(--white); }
+    .strip .section-head p { color: rgba(255,255,255,0.7); }
+    .strip .eyebrow { background: rgba(255,255,255,0.1); color: var(--accent-soft); }
+    .strip .eyebrow svg { color: var(--accent-soft); }
+    .strip-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 12px; }
+    .strip-grid .shot { border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.35); }
+    .strip-grid .shot img { width: 100%; display: block; }
+    .strip-grid .cap { text-align: center; font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 14px; }
+
+    /* STEPS */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .step { position: relative; padding-top: 20px; }
+    .step .num { font-family: 'Playfair Display', serif; font-size: 56px; font-weight: 700; color: var(--outline-variant); line-height: 1; }
+    .step h3 { font-size: 20px; margin: 14px 0 8px; }
+    .step p { font-size: 15px; color: var(--variant); line-height: 1.6; }
+
+    /* CTA */
+    .cta { text-align: center; background: var(--white); border-radius: 40px; padding: 80px 32px; box-shadow: var(--shadow-soft); }
+    .cta h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 800; }
+    .cta p { font-size: 18px; color: var(--variant); margin: 18px auto 34px; max-width: 480px; }
+    .cta .hero-actions { justify-content: center; }
+
+    /* FOOTER */
+    footer { padding: 48px 0 60px; border-top: 1px solid var(--outline-variant); margin-top: 40px; }
+    .foot-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .foot-links { display: flex; gap: 24px; }
+    .foot-links a { font-size: 14px; color: var(--variant); }
+    .foot-links a:hover { color: var(--onyx); }
+    .muted { color: var(--outline); font-size: 14px; }
+
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; gap: 12px; }
+      .phones { height: 460px; margin-top: 20px; }
+      .phone { width: 200px; }
+      .features, .steps { grid-template-columns: 1fr; }
+      .strip-grid { grid-template-columns: repeat(2, 1fr); }
+      .nav-links .link { display: none; }
+      section { padding: 64px 0; }
+      .strip { padding: 48px 24px; border-radius: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="wrap nav-inner">
+      <a class="logo" href="/"><img src="/logo.png" alt="Capsule" /> Capsule</a>
+      <div class="nav-links">
+        <a class="link" href="#features">Возможности</a>
+        <a class="link" href="#how">Как это работает</a>
+        <a class="link" href="#showcase">Экраны</a>
+        <a class="btn btn-primary" href="/download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Скачать
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg>
+          AI Wardrobe &amp; Stylist
+        </span>
+        <h1>Ваш гардероб. <em>Собранный</em> искусственным интеллектом.</h1>
+        <p class="lead">
+          Сфотографируйте одежду — Capsule распознает тип, цвет и материал, а затем
+          предложит идеальные образы с учётом погоды, событий и того, что вы уже носили.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="/download">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
+            Скачать для Android
+          </a>
+          <a class="btn btn-ghost btn-lg" href="#how">Как это работает</a>
+        </div>
+        <div class="store-note">iOS-версия скоро · Бесплатно на старте</div>
+        <div class="tags">
+          <span class="tag">Computer Vision</span>
+          <span class="tag">Погода</span>
+          <span class="tag">Капсульный гардероб</span>
+          <span class="tag">Образ дня</span>
+        </div>
+      </div>
+      <div class="phones">
+        <div class="phone back-left"><img src="/screens/1.png" alt="Гардероб" /></div>
+        <div class="phone back-right"><img src="/screens/3.png" alt="Календарь" /></div>
+        <div class="phone front"><img src="/screens/4.png" alt="Образ дня" /></div>
+      </div>
+    </div>
+  </header>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/></svg>
+          Возможности
+        </span>
+        <h2>Умный гардероб в кармане</h2>
+        <p>Всё, что нужно, чтобы одеваться стильно каждый день — без лишних раздумий.</p>
+      </div>
+      <div class="features">
+        <div class="feature">
+          <div class="ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          </div>
+          <h3>Сканирование по фото</h3>
+          <p>Наведите камеру — ИИ определит тип вещи, цвет и материал и добавит её в каталог за секунды.</p>
+        </div>
+        <div class="feature">
+          <div class="ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg>
+          </div>
+          <h3>AI-стилист</h3>
+          <p>Образ дня, собранный под погоду и ваш стиль. Не нравится — один тап, и новый вариант.</p>
+        </div>
+        <div class="feature">
+          <div class="ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+          </div>
+          <h3>Образы под события</h3>
+          <p>Добавьте событие с дресс-кодом — Capsule подберёт комплект заранее.</p>
+        </div>
+        <div class="feature">
+          <div class="ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <h3>Учёт погоды</h3>
+          <p>Рекомендации адаптируются под температуру и условия за окном.</p>
+        </div>
+        <div class="feature">
+          <div class="ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
+          </div>
+          <h3>История носки</h3>
+          <p>Приложение помнит, что вы уже носили, и помогает задействовать весь гардероб.</p>
+        </div>
+        <div class="feature">
+          <div class="ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5 16 10 4 20"/><path d="M14 6h6v6"/><path d="M4 4l6 6"/></svg>
+          </div>
+          <h3>Капсульный подход</h3>
+          <p>Меньше вещей — больше сочетаний. Осознанный гардероб без хаоса.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/></svg>
+          Как это работает
+        </span>
+        <h2>Три шага к идеальному образу</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="num">01</div>
+          <h3>Сфотографируйте</h3>
+          <p>Добавьте вещи в гардероб, просто сфотографировав их. ИИ всё каталогизирует сам.</p>
+        </div>
+        <div class="step">
+          <div class="num">02</div>
+          <h3>Получите образ</h3>
+          <p>Capsule собирает комплекты из ваших вещей под погоду, повод и настроение.</p>
+        </div>
+        <div class="step">
+          <div class="num">03</div>
+          <h3>Носите с удовольствием</h3>
+          <p>Отмечайте, что надели — и рекомендации становятся ещё точнее.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="showcase">
+    <div class="wrap">
+      <div class="strip">
+        <div class="section-head">
+          <span class="eyebrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/></svg>
+            Экраны
+          </span>
+          <h2>Красиво в каждой детали</h2>
+          <p>Минимализм, тёплые нейтральные тона и типографика уровня модного журнала.</p>
+        </div>
+        <div class="strip-grid">
+          <div><div class="shot"><img src="/screens/1.png" alt="Гардероб" /></div><div class="cap">Гардероб</div></div>
+          <div><div class="shot"><img src="/screens/4.png" alt="Образ дня" /></div><div class="cap">Образ дня</div></div>
+          <div><div class="shot"><img src="/screens/2.png" alt="Сканирование" /></div><div class="cap">Сканирование</div></div>
+          <div><div class="shot"><img src="/screens/3.png" alt="Календарь" /></div><div class="cap">Календарь</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="cta">
+        <span class="eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/></svg>
+          Готовы начать?
+        </span>
+        <h2>Соберите свою капсулу</h2>
+        <p>Скачайте Capsule и позвольте ИИ навести порядок в вашем гардеробе.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="/download">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
+            Скачать для Android
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap foot-inner">
+      <a class="logo" href="/"><img src="/logo.png" alt="Capsule" /> Capsule</a>
+      <div class="foot-links">
+        <a href="#features">Возможности</a>
+        <a href="#how">Как это работает</a>
+        <a href="#showcase">Экраны</a>
+      </div>
+      <div class="muted">© 2026 Capsule</div>
+    </div>
+  </footer>
+</body>
+</html>
